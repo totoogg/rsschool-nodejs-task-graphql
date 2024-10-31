@@ -5,7 +5,6 @@ import {
   GraphQLNonNull,
   GraphQLObjectType,
 } from 'graphql';
-import { UUIDType } from './uuid.js';
 
 export const MemberType = new GraphQLObjectType({
   name: 'MemberType',

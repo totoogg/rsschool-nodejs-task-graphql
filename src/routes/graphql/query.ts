@@ -23,11 +23,7 @@ export const RootQuery = new GraphQLObjectType({
           where: { id: args.id },
         });
 
-        if (result === null) {
-          throw context.httpErrors.notFound();
-        }
-
-        return result;
+        return result || null;
       },
     },
     users: {
@@ -45,11 +41,7 @@ export const RootQuery = new GraphQLObjectType({
           where: { id: args.id },
         });
 
-        if (result === null) {
-          throw context.httpErrors.notFound();
-        }
-
-        return result;
+        return result || null;
       },
     },
     posts: {
@@ -67,11 +59,7 @@ export const RootQuery = new GraphQLObjectType({
           where: { id: args.id },
         });
 
-        if (result === null) {
-          throw context.httpErrors.notFound();
-        }
-
-        return result;
+        return result || null;
       },
     },
     profiles: {
@@ -89,11 +77,7 @@ export const RootQuery = new GraphQLObjectType({
           where: { id: args.id },
         });
 
-        if (result === null) {
-          throw context.httpErrors.notFound();
-        }
-
-        return result;
+        return result || null;
       },
     },
   },

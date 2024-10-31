@@ -16,13 +16,57 @@ export const UserType = new GraphQLObjectType({
     id: { type: new GraphQLNonNull(UUIDType) },
     name: { type: new GraphQLNonNull(GraphQLString) },
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
-    profile: { type: ProfileType },
-    posts: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))) },
+    profile: {
+      type: ProfileType,
+      resolve: async (source, args, context) => {
+        const result = await context.prisma.profile.findUnique({
+          where: { userId: source.id },
+        });
+
+        return result || null;
+      },
+    },
+    posts: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
+      resolve: async (source, args, context) => {
+        const result = await context.prisma.post.findMany({
+          where: { authorId: source.id },
+        });
+
+        return result;
+      },
+    },
     userSubscribedTo: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      resolve: async (source, args, context) => {
+        const result = await context.prisma.user.findMany({
+          where: {
+            subscribedToUser: {
+              some: {
+                subscriberId: { in: [source.id] },
+              },
+            },
+          },
+        });
+
+        return result;
+      },
     },
     subscribedToUser: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      resolve: async (source, args, context) => {
+        const result = await context.prisma.user.findMany({
+          where: {
+            userSubscribedTo: {
+              some: {
+                authorId: { in: [source.id] },
+              },
+            },
+          },
+        });
+
+        return result;
+      },
     },
   }),
 });

@@ -41,11 +41,15 @@ export const Mutation = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       async resolve(parent, args, context) {
-        return await context.prisma.user.delete({
+        const result = await context.prisma.user.delete({
           where: {
             id: args.id,
           },
         });
+
+        return result
+          ? `The user from ID ${args.id} is remote successfully`
+          : `The user from ID ${args.id} is remote unsuccessfully`;
       },
     },
     createProfile: {
@@ -78,11 +82,15 @@ export const Mutation = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       async resolve(parent, args, context) {
-        return await context.prisma.profile.delete({
+        const result = await context.prisma.profile.delete({
           where: {
             id: args.id,
           },
         });
+
+        return result
+          ? `The profile from ID ${args.id} is remote successfully`
+          : `The profile from ID ${args.id} is remote unsuccessfully`;
       },
     },
     createPost: {
@@ -115,11 +123,15 @@ export const Mutation = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       async resolve(parent, args, context) {
-        return await context.prisma.post.delete({
+        const result = await context.prisma.post.delete({
           where: {
             id: args.id,
           },
         });
+
+        return result
+          ? `The post from ID ${args.id} is remote successfully`
+          : `The post from ID ${args.id} is remote unsuccessfully`;
       },
     },
     subscribeTo: {
@@ -129,12 +141,14 @@ export const Mutation = new GraphQLObjectType({
         authorId: { type: new GraphQLNonNull(UUIDType) },
       },
       async resolve(parent, args, context) {
-        return await context.prisma.subscribersOnAuthors.create({
+        const result = await context.prisma.subscribersOnAuthors.create({
           data: {
             subscriberId: args.userId,
             authorId: args.authorId,
           },
         });
+
+        return result ? `Subscribe successfully` : `Subscribe unsuccessfully`;
       },
     },
     unsubscribeFrom: {
@@ -144,7 +158,7 @@ export const Mutation = new GraphQLObjectType({
         authorId: { type: new GraphQLNonNull(UUIDType) },
       },
       async resolve(parent, args, context) {
-        return await context.prisma.subscribersOnAuthors.delete({
+        const result = await context.prisma.subscribersOnAuthors.delete({
           where: {
             subscriberId_authorId: {
               subscriberId: args.userId,
@@ -152,6 +166,8 @@ export const Mutation = new GraphQLObjectType({
             },
           },
         });
+
+        return result ? `Unsubscribe successfully` : `Unsubscribe unsuccessfully`;
       },
     },
   },

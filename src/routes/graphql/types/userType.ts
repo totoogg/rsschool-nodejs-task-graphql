@@ -9,6 +9,7 @@ import {
 import { UUIDType } from './uuid.js';
 import { ProfileType } from './profileType.js';
 import { PostType } from './postType.js';
+import DataLoader from 'dataloader';
 
 export const UserType = new GraphQLObjectType({
   name: 'User',
@@ -18,54 +19,120 @@ export const UserType = new GraphQLObjectType({
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
     profile: {
       type: ProfileType,
-      resolve: async (source, args, context) => {
-        const result = await context.prisma.profile.findUnique({
-          where: { userId: source.id },
-        });
+      resolve: async (source, args, context, info) => {
+        const { dataloaders } = context;
+        let dl = dataloaders.get(info.fieldNodes);
 
-        return result || null;
+        if (!dl) {
+          dl = new DataLoader(async (ids: readonly string[]) => {
+            const rows = await context.prisma.profile.findMany({
+              where: { userId: { in: ids } },
+            });
+
+            const sortedInIdsOrder = ids.map((id) =>
+              rows.find((x: { userId: string }) => x.userId === id),
+            );
+
+            return sortedInIdsOrder;
+          });
+
+          dataloaders.set(info.fieldNodes, dl);
+        }
+
+        return dl.load(source.id) || null;
       },
     },
     posts: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
-      resolve: async (source, args, context) => {
-        const result = await context.prisma.post.findMany({
-          where: { authorId: source.id },
-        });
+      resolve: async (source, args, context, info) => {
+        const { dataloaders } = context;
+        let dl = dataloaders.get(info.fieldNodes);
 
-        return result;
+        if (!dl) {
+          dl = new DataLoader(async (ids: readonly string[]) => {
+            const rows = await context.prisma.post.findMany({
+              where: { authorId: { in: ids } },
+            });
+
+            const sortedInIdsOrder = ids.map((id) =>
+              rows.filter((x: { authorId: string }) => x.authorId === id),
+            );
+
+            return sortedInIdsOrder;
+          });
+
+          dataloaders.set(info.fieldNodes, dl);
+        }
+
+        return dl.load(source.id);
       },
     },
     userSubscribedTo: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
-      resolve: async (source, args, context) => {
-        const result = await context.prisma.user.findMany({
-          where: {
-            subscribedToUser: {
-              some: {
-                subscriberId: { in: [source.id] },
-              },
-            },
-          },
-        });
+      resolve: async (source, args, context, info) => {
+        const { dataloaders } = context;
+        let dl = dataloaders.get(info.fieldNodes);
 
-        return result;
+        if (!dl) {
+          dl = new DataLoader(async (ids: readonly string[]) => {
+            const rows = await context.prisma.user.findMany({
+              where: {
+                subscribedToUser: {
+                  some: {
+                    subscriberId: { in: ids },
+                  },
+                },
+              },
+              include: {
+                subscribedToUser: true,
+              },
+            });
+
+            const sortedInIdsOrder = ids.map((id) =>
+              rows.filter((x) => !!x.subscribedToUser.find((y) => y.subscriberId === id)),
+            );
+
+            return sortedInIdsOrder;
+          });
+
+          dataloaders.set(info.fieldNodes, dl);
+        }
+
+        return dl.load(source.id);
       },
     },
     subscribedToUser: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
-      resolve: async (source, args, context) => {
-        const result = await context.prisma.user.findMany({
-          where: {
-            userSubscribedTo: {
-              some: {
-                authorId: { in: [source.id] },
-              },
-            },
-          },
-        });
+      resolve: async (source, args, context, info) => {
+        const { dataloaders } = context;
+        let dl = dataloaders.get(info.fieldNodes);
 
-        return result;
+        if (!dl) {
+          dl = new DataLoader(async (ids: readonly string[]) => {
+            const rows = await context.prisma.user.findMany({
+              where: {
+                userSubscribedTo: {
+                  some: {
+                    authorId: { in: ids },
+                  },
+                },
+              },
+              include: {
+                userSubscribedTo: true,
+              },
+            });
+
+            const sortedInIdsOrder = ids.map((id) =>
+              rows.filter((x) => !!x.userSubscribedTo.find((y) => y.authorId === id)),
+            );
+
+            return sortedInIdsOrder;
+          });
+
+          dataloaders.set(info.fieldNodes, dl);
+        }
+
+        return dl.load(source.id);
       },
     },
   }),

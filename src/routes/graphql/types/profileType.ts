@@ -15,7 +15,7 @@ export const ProfileType = new GraphQLObjectType({
     id: { type: new GraphQLNonNull(UUIDType) },
     isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
-    memberTypeId: { type: MemberTypeId },
+    memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
     memberType: {
       type: new GraphQLNonNull(MemberType),
       resolve: async (source, args, context, info) => {
@@ -39,6 +39,32 @@ export const ProfileType = new GraphQLObjectType({
         }
 
         return dl.load(source.memberTypeId);
+      },
+    },
+    userId: { type: new GraphQLNonNull(UUIDType) },
+    user: {
+      type: new GraphQLNonNull(MemberType),
+      resolve: async (source, args, context, info) => {
+        const { dataloaders } = context;
+        let dl = dataloaders.get(info.fieldNodes);
+
+        if (!dl) {
+          dl = new DataLoader(async (ids: readonly string[]) => {
+            const rows = await context.prisma.user.findMany({
+              where: { id: { in: ids } },
+            });
+
+            const sortedInIdsOrder = ids.map((id) =>
+              rows.find((x: { id: string }) => x.id === id),
+            );
+
+            return sortedInIdsOrder;
+          });
+
+          dataloaders.set(info.fieldNodes, dl);
+        }
+
+        return dl.load(source.userId);
       },
     },
   }),

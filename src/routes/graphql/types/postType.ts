@@ -5,6 +5,8 @@ import {
   GraphQLString,
 } from 'graphql';
 import { UUIDType } from './uuid.js';
+import DataLoader from 'dataloader';
+import { UserType } from './userType.js';
 
 export const PostType = new GraphQLObjectType({
   name: 'Post',
@@ -12,6 +14,31 @@ export const PostType = new GraphQLObjectType({
     id: { type: new GraphQLNonNull(UUIDType) },
     title: { type: new GraphQLNonNull(GraphQLString) },
     content: { type: new GraphQLNonNull(GraphQLString) },
+    author: {
+      type: new GraphQLNonNull(UserType),
+      resolve: async (source, args, context, info) => {
+        const { dataloaders } = context;
+        let dl = dataloaders.get(info.fieldNodes);
+
+        if (!dl) {
+          dl = new DataLoader(async (ids: readonly string[]) => {
+            const rows = await context.prisma.user.findMany({
+              where: { id: { in: ids } },
+            });
+
+            const sortedInIdsOrder = ids.map((id) =>
+              rows.find((x: { userId: string }) => x.userId === id),
+            );
+
+            return sortedInIdsOrder;
+          });
+
+          dataloaders.set(info.fieldNodes, dl);
+        }
+
+        return dl.load(source.id);
+      },
+    },
   }),
 });
 

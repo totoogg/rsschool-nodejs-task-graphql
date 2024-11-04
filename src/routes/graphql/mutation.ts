@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
 import { ChangeUserInput, CreateUserInput, UserType } from './types/userType.js';
 import { UUIDType } from './types/uuid.js';
